@@ -76,16 +76,17 @@ Mesh Scene::processMesh(aiMesh* mesh, const aiScene* scene){
     vector<unsigned int> faces;
 
     //Process Vertices
-    for(int i=0;i<mesh->mNumVertices;i++){
+    for(unsigned int i=0;i<mesh->mNumVertices;i++){
         point3d pos(mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z);
         vec3d normal(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z);
-        vertices.push_back(Vertex(pos, normal));
+        //normals read by assimp are not necessarily normalized
+        vertices.push_back(Vertex(pos, unit_vec(normal)));
     }
 
     //Process Faces
-    for(int i=0;i<mesh->mNumFaces;i++){
+    for(unsigned int i=0;i<mesh->mNumFaces;i++){
         aiFace face = mesh->mFaces[i];
-        for(int j=0;j<face.mNumIndices;j++){
+        for(unsigned int j=0;j<face.mNumIndices;j++){
             faces.push_back(face.mIndices[j]);
         }
     }

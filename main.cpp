@@ -8,7 +8,7 @@ vector<vector<color3d>> pixelMap;
 Scene generate_scene(string obj_path, string config_path){
     int width = 0;
     int height = 0;
-    Scene newScene = Scene(obj_path, config_path, width, height);
+    Scene newScene(obj_path, config_path, width, height);
     pixelMap = vector<vector<color3d>>(height,vector<color3d>(width,color3d()));
     return newScene;
 }
