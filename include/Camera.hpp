@@ -8,11 +8,14 @@ class Camera {
         Camera();
         Camera(point3d eye, point3d lookAt, vec3d up_dir, int screen_width, int screen_height, int screen_depth);
         Ray getRay(double x, double y);
+        int getWidth();
+        int getHeight();
 
     private:
         point3d eye;
         point3d lookAt;
         vec3d view_dir, up_dir, right_dir;
+        int screen_width, screen_height, screen_depth;
         point3d origin; 
 
 };

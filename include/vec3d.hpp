@@ -27,6 +27,14 @@ class vec3d{
         double z(){return vec[2];}
         double length(){return magnitude;}
 
+        //Set Methods
+        void set(double x,double y,double z){
+            this->vec[0] = x;
+            this->vec[1] = y;
+            this->vec[2] = z;
+            this->magnitude = sqrt(x*x+y*y+z*z);
+        }
+
         //Operator Overloading on 3D vectors
         double operator[](int t){
             return vec[t];

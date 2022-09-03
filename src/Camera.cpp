@@ -9,10 +9,21 @@ Camera::Camera(point3d eye, point3d lookAt, vec3d up_dir, int screen_width, int 
     this->up_dir = unit_vec(up_dir);
     this->right_dir = unit_vec(cross(view_dir,up_dir));
     this->origin = eye + screen_depth * this->view_dir - (screen_height/2) * this->up_dir - (screen_width/2) * this->right_dir;
+    this->screen_width = screen_width;
+    this->screen_height = screen_height;
+    this->screen_depth = screen_depth;
 }
 
 Ray Camera::getRay(double x, double y){
     point3d rayOrigin = this->eye;
     vec3d rayDir = this->origin + x * this->right_dir + y * this->up_dir - this->eye;
     return Ray(rayOrigin,rayDir);
+}
+
+int Camera::getWidth(){
+    return this->screen_width;
+}
+
+int Camera::getHeight(){
+    return this->screen_height;
 }

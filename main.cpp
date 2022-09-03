@@ -6,10 +6,7 @@ using namespace std;
 vector<vector<color3d>> pixelMap;
 
 Scene generate_scene(string obj_path, string config_path){
-    int width = 0;
-    int height = 0;
-    Scene newScene(obj_path, config_path, width, height);
-    pixelMap = vector<vector<color3d>>(height,vector<color3d>(width,color3d()));
+    Scene newScene(obj_path, config_path);
     return newScene;
 }
 
@@ -38,5 +35,12 @@ void display(){
 }
 
 int main(int argc, char** argv){
+    string obj_path = argv[1];
+    string config_path = argv[2];
+    Scene newScene = generate_scene(obj_path, config_path);
 
+    newScene.rayCast(pixelMap);
+    display();
+
+    return 0;
 }

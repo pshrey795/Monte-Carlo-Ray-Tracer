@@ -1,25 +1,14 @@
 #ifndef MESH_HPP
 #define MESH_HPP
 
-#include "vec3d.hpp"
-#include <bits/stdc++.h>
+#include "Object3D.hpp"
 
-using namespace std;
-
-struct Vertex{
-    point3d pos;
-    vec3d normal;
-    Vertex(point3d pos, vec3d normal){
-        this->pos = pos;
-        this->normal = normal;
-    }
-};
-
-class Mesh {
+class Mesh : public Object3D {
     public:
         vector<Vertex> vertices;
-        vector<unsigned int> faces;
-        Mesh(vector<Vertex> vertices, vector<unsigned int> indices);
+        vector<Face> faces;
+
+        Mesh(vector<Vertex> vertices, vector<unsigned int> indices, Material mat);
          
 };
 
