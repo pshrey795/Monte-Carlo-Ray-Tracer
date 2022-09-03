@@ -11,11 +11,6 @@ using namespace std;
 
 struct Vertex{
     point3d pos;
-    vec3d normal;
-    Vertex(point3d pos, vec3d normal){
-        this->pos = pos;
-        this->normal = normal;
-    }
     Vertex(point3d pos){
         this->pos = pos; 
     }
@@ -23,10 +18,12 @@ struct Vertex{
 
 struct Face{
     int v1,v2,v3;
-    Face(int v1, int v2, int v3){
+    vec3d normal;
+    Face(int v1, int v2, int v3, vec3d normal){
         this->v1 = v1;
         this->v2 = v2;
         this->v3 = v3;
+        this->normal = normal; 
     }
 };
 
@@ -52,9 +49,11 @@ struct hit_record {
     double t;
     int face_index;
     int mesh_index;
+    bool isHit;
 
     hit_record(){
         t = INF;
+        isHit = false;
         face_index = -1;
         mesh_index = -1;
     } 

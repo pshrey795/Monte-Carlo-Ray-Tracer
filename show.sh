@@ -1,0 +1,1 @@
+eog Outputs/output.ppm

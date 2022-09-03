@@ -14,6 +14,12 @@ class vec3d{
             this->vec[2] = 0;
             this->magnitude = 0;
         }
+        vec3d(double x){
+            this->vec[0] = x;
+            this->vec[1] = x;
+            this->vec[2] = x;
+            this->magnitude = sqrt(3) * x;
+        }
         vec3d(double x,double y,double z){
             this->vec[0] = x;
             this->vec[1] = y;

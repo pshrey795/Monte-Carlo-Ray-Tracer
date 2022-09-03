@@ -7,6 +7,7 @@ Scene::Scene(string obj_path, string config_path){
 
 void Scene::loadScene(string path){
     Assimp::Importer importer;
+    //Require explicit triangulation since the object file may contain polygonal faces in general 
     const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs);
     if(!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode){
         cout << "ERROR::ASSIMP::" << importer.GetErrorString() << endl;
@@ -95,16 +96,29 @@ Mesh Scene::processMesh(aiMesh* mesh, const aiScene* scene){
 
 
 //Ray Casting
-void Scene::rayCast(vector<vector<color3d>>& pixelMap){
+void Scene::rayCast(vector<vector<color3d>>& pixelMap, int samples, int n_threads){
     int width = cam->getWidth();
     int height = cam->getHeight();
+    int window_length = (height + n_threads - 1) / n_threads;
 
     //Initializing pixelMap
     pixelMap = vector<vector<color3d>>(height,vector<color3d>(width,color3d()));
-    for(int i=0;i<height;i++){
-        for(int j=0;j<width;j++){
-            Ray ray = cam->getRay(j, i);
-            pixelMap[i][j] = rayTrace(ray, 0);
+    #pragma omp parallel num_threads(n_threads)
+    {
+        int thread_id = omp_get_thread_num();
+        int x_high = min((thread_id + 1) * window_length, height);
+        int x_low = thread_id * window_length;
+        for(int x=x_low;x<x_high;x++){
+            for(int y=0;y<width;y++){
+                color3d new_color(0.0f);
+                for(int i = 0;i < samples; i++){
+                    double u = x - 0.5 + random_double();
+                    double v = y - 0.5 + random_double();
+                    Ray ray = cam->getRay(v, u);
+                    new_color += rayTrace(ray, 0);
+                }
+                pixelMap[x][y] = new_color / samples;
+            }
         }
     }
 }
@@ -115,11 +129,35 @@ color3d Scene::rayTrace(Ray ray, int depth){
         return BG_COLOR;
     }else{
         //Obtain the intersection point of the ray with the current geometry 
+        hit_record rec = intersect(ray);
 
+        //Light Transport Algorithm 
+        if(rec.isHit){
+            //Outgoing radiance
+            color3d Lo = color3d(0.0f);
 
-        //Invoke the light transport algorithm at the current point recursively 
+            //Emitted radiance 
+            color3d Le = rec.mat.Ke * color3d(255.0f);
+            Lo += Le;
 
+            //Tracing reflected and refracted rays
+            
 
-        return BG_COLOR;
+            return Lo;
+        }else{
+            return BG_COLOR;
+        }
     }
+}
+
+//Processing intersections(without acceleraation)
+hit_record Scene::intersect(Ray r){
+    hit_record rec; 
+    //Not zero for handling numerical errors
+    double t_min = 0.001;
+    for(unsigned int i = 0; i < this->meshes.size(); i++){
+        double t_max = rec.t;
+        this->meshes[i].intersect(r, t_min, t_max, i, rec);
+    } 
+    return rec; 
 }

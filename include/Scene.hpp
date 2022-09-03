@@ -3,6 +3,7 @@
 
 #include "Mesh.hpp" 
 #include "Camera.hpp"
+#include<omp.h>
 
 #include<assimp/Importer.hpp>
 #include<assimp/scene.h>
@@ -18,7 +19,7 @@ class Scene {
         Scene(string obj_path, string config_path);
 
         //Casting rays for starting the ray tracing
-        void rayCast(vector<vector<color3d>>& pixelMap);
+        void rayCast(vector<vector<color3d>>& pixelMap, int samples, int n_threads);
 
     private:
         Camera* cam; 
@@ -30,7 +31,7 @@ class Scene {
 
         //Ray Tracing
         color3d rayTrace(Ray ray, int depth);
-        void intersect(Ray r, double lower_limit, double upper_limit, hit_record& rec);        
+        hit_record intersect(Ray r);        
 };
 
 #endif
