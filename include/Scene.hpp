@@ -9,7 +9,7 @@
 #include<assimp/scene.h>
 #include<assimp/postprocess.h>
 
-#define MAX_DEPTH 5
+#define MAX_DEPTH 3
 #define BG_COLOR color3d(0.5*255,0.7*255,0.9*255);
 
 using namespace std;
@@ -24,10 +24,15 @@ class Scene {
     private:
         Camera* cam; 
         vector<Mesh> meshes;
+        vector<unsigned int> lights; //Indices of lights in meshes
         void loadScene(string path);
         void loadCamera(string path);
         void processNode(aiNode* node, const aiScene* scene);
         Mesh processMesh(aiMesh* mesh, const aiScene* scene);
+
+        //Getting light cones from the given point
+        double getLightCone(point3d p, int index);
+        unordered_map<unsigned int, double> getLightCones(point3d p);
 
         //Ray Tracing
         color3d rayTrace(Ray ray, int depth);

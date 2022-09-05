@@ -14,6 +14,9 @@ struct Vertex{
     Vertex(point3d pos){
         this->pos = pos; 
     }
+    Vertex(){
+        this->pos = point3d(0.0f);
+    }
 };
 
 struct Face{
@@ -45,6 +48,7 @@ struct Material{
 struct hit_record {
     point3d pt;
     vec3d normal;
+    vec3d tangent;
     Material mat;
     double t;
     int face_index;

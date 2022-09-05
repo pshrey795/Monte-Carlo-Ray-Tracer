@@ -1,8 +1,10 @@
 #include "../include/Mesh.hpp"
 
-Mesh::Mesh(vector<Vertex> vertices, vector<unsigned int> indices, Material mat){
+Mesh::Mesh(vector<Vertex> vertices, vector<unsigned int> indices, Vertex centralVertex, Material mat){
     this->vertices = vertices;
     this->mat = mat;
+    this->centralVertex = centralVertex;
+    this->isLight = !(mat.Ke == color3d(0,0,0));
     for(unsigned int i=0;i<indices.size();i+=3){
         point3d a = vertices[indices[i]].pos;
         point3d b = vertices[indices[i+1]].pos;
@@ -57,6 +59,7 @@ void Mesh::intersect(Ray r, double t_min, double t_max, int mesh_index, hit_reco
                 rec.t = t;
                 rec.pt = r.origin + t * r.direction;
                 rec.normal = faces[i].normal;
+                rec.tangent = unit_vec(vertices[faces[i].v2].pos - vertices[faces[i].v1].pos);
                 rec.mat = this->mat;
                 rec.face_index = i;
                 rec.mesh_index = mesh_index;

@@ -17,7 +17,9 @@ class Mesh : public Object3D {
     public:
         vector<Vertex> vertices;
         vector<Face> faces;
-        Mesh(vector<Vertex> vertices, vector<unsigned int> indices, Material mat);
+        bool isLight = false;
+        Vertex centralVertex;  
+        Mesh(vector<Vertex> vertices, vector<unsigned int> indices, Vertex centralVertex, Material mat);
         void intersect(Ray r, double t_min, double t_max, int mesh_index, hit_record &rec);
 
     private:
