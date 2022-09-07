@@ -35,6 +35,12 @@ double dot(vec3d u,vec3d v){
 vec3d cross(vec3d u,vec3d v){
     return vec3d(u[1]*v[2]-u[2]*v[1],u[2]*v[0]-u[0]*v[2],u[0]*v[1]-u[1]*v[0]);
 }
+vec3d min(vec3d v, vec3d u){
+    return vec3d(min(v[0],u[0]),min(v[1],u[1]),min(v[2],u[2]));
+}
+vec3d max(vec3d v, vec3d u){
+    return vec3d(max(v[0],u[0]),max(v[1],u[1]),max(v[2],u[2]));
+}
 
 double area(point3d p1,point3d p2,point3d p3){
     double base = (p2-p3).length();

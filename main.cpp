@@ -20,16 +20,20 @@ double clamp(double a,double low, double high){
     }
 }
 
-void display(){
+void display(int samples){
     int h = pixelMap.size();
     int w = pixelMap[0].size();
+    double scale = 1.0/samples;
     cout<<"P3\n"<<w<<" "<<h<<"\n255\n";
     for(int j=h-1;j>=0;j--){
         for(int i=0;i<w;i++){
-            int r = clamp(pixelMap[j][i][0],0,255);
-            int g = clamp(pixelMap[j][i][1],0,255);
-            int b = clamp(pixelMap[j][i][2],0,255);
-            cout << r << " " << g << " " << b << "\n";
+            color3d c = pixelMap[j][i];
+            c = c*scale;
+            c = color3d(clamp(sqrt(c[0]),0.0,0.999),clamp(sqrt(c[1]),0.0,0.999),clamp(sqrt(c[2]),0.0,0.999));
+            int ir = int(256*c[0]);
+            int ig = int(256*c[1]);
+            int ib = int(256*c[2]);
+            cout<<ir<<" "<<ig<<" "<<ib<<"\n";
         }
     }
 }
@@ -40,7 +44,7 @@ int main(int argc, char** argv){
     Scene newScene = generate_scene(obj_path, config_path);
 
     newScene.castRays(pixelMap,8,8);
-    display();
+    display(8);
 
     return 0;
 }

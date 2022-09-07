@@ -9,29 +9,6 @@
 
 using namespace std;
 
-struct Vertex{
-    point3d pos;
-    Vertex(point3d pos){
-        this->pos = pos; 
-    }
-    Vertex(){
-        this->pos = point3d(0.0f);
-    }
-};
-
-struct Face{
-    int v1,v2,v3;
-    vec3d normal;
-    vec3d centroid;
-    Face(int v1, int v2, int v3, vec3d normal, vec3d centroid){
-        this->v1 = v1;
-        this->v2 = v2;
-        this->v3 = v3;
-        this->normal = normal; 
-        this->centroid = centroid;
-    }
-};
-
 struct Material{
     color3d Ka;         //ambient
     color3d Kd;         //diffuse

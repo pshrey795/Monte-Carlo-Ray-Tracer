@@ -10,8 +10,8 @@
 #include<assimp/scene.h>
 #include<assimp/postprocess.h>
 
-#define MAX_DEPTH 1
-#define BG_COLOR color3d(0.5*255,0.7*255,0.9*255);
+#define MAX_DEPTH 2
+#define BG_COLOR color3d(0.5,0.7,0.9);
 
 using namespace std;
 
@@ -32,7 +32,7 @@ class Scene {
         Mesh processMesh(aiMesh* mesh, const aiScene* scene);
 
         //Bounding Volume Hierarchy 
-        BVH bvh; 
+        BVHRootNode bvhRoot; 
 
         //Getting light cones from the given point
         double getLightCone(point3d p, int index);
@@ -44,7 +44,8 @@ class Scene {
 
         //Computing Illuminations 
         color3d computeLocalIllumination(Ray wo, hit_record rec, int depth, int samples_per_source);
-        color3d computeGlobalIllumination(Ray wo, hit_record rec, int depth, int samples);     
+        color3d computeGlobalIllumination(Ray wo, hit_record rec, int depth, int samples); 
+    
 };
 
 #endif

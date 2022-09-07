@@ -13,6 +13,105 @@ Mesh::Mesh(vector<Vertex> vertices, vector<unsigned int> indices, Vertex central
         vec3d normal = unit_vec(cross(b-a, c-a));
         faces.push_back(Face(indices[i], indices[i+1], indices[i+2], normal, centroid));
     }
+    nodeList = vector<BVHNode>(2*faces.size(), BVHNode());
+    constructBVH();
+}
+
+//BVH Construction 
+void Mesh::constructBVH(){
+    //Populating the list of primitives(same as the list of faces initially)
+    for(unsigned int i=0;i<faces.size();i++){
+        primitives.push_back(i);
+    }
+
+    BVHNode& currNode = nodeList[currentNodeIndex];
+    currNode.primCount = faces.size();
+    numNodes++;
+    updateBounds(currentNodeIndex);
+    generateNodes(currentNodeIndex);
+}
+
+void Mesh::updateBounds(int nodeIndex){
+    BVHNode& currNode = nodeList[nodeIndex];
+    for(int i = currNode.firstPrim; i < currNode.primCount; i++){
+        Face currFace = faces[primitives[i]];
+        point3d a = vertices[currFace.v1].pos;
+        point3d b = vertices[currFace.v2].pos;
+        point3d c = vertices[currFace.v3].pos;
+        currNode.bounds.nodeMin = min(min(min(currNode.bounds.nodeMin, a), b), c);
+        currNode.bounds.nodeMax = max(max(max(currNode.bounds.nodeMax, a), b), c);
+    }
+}
+
+void Mesh::generateNodes(int nodeIndex){
+    BVHNode& currNode = nodeList[nodeIndex];
+
+    if(currNode.primCount < MIN_PRIM_COUNT){
+        //Recursion base case
+        return;
+    }else{
+        //We divide perpendicular to the longest axis 
+        //0: x, 1: y, 2: z
+        vec3d axisLength = currNode.bounds.nodeMax - currNode.bounds.nodeMin;
+        int longestAxis = 0;
+        if(axisLength.y() > axisLength.x()){
+            longestAxis = 1;
+        }else if(axisLength.z() > axisLength.x()){
+            longestAxis = 2;
+        }
+        
+        //Defining the splitting plane
+        int midValue = currNode.bounds.nodeMin[longestAxis] + (axisLength[longestAxis] / 2); 
+
+        //Partition the faces (in place) into two sets 
+        int i = currNode.firstPrim;
+        int j = currNode.firstPrim + currNode.primCount - 1;
+        while(i <= j){
+            Face currFace = faces[primitives[i]];
+            if(currFace.centroid[longestAxis] < midValue){
+                i++;
+            }else{
+                swap(primitives[i], primitives[j]);
+                j--;
+            }
+        }
+
+        //Creating the left and right nodes recursively 
+        int leftPrimFirst = currNode.firstPrim;
+        int leftPrimCount = i - currNode.firstPrim;
+        int rightPrimFirst = i;
+        int rightPrimCount = currNode.firstPrim + currNode.primCount - i;
+        
+        if(leftPrimCount == 0 || rightPrimCount == 0){
+            //Occurs when the centroids of all the faces are on one side of the split plane
+            //While the actual bounds of the plane are across the the plane
+            //In this case, we just return since no new children need to be created 
+            return;
+        }
+
+        //Creating and updating new nodes
+        int leftNodeIndex = numNodes++;
+        int rightNodeIndex = numNodes++;
+        BVHNode& leftNode = nodeList[leftNodeIndex];
+        BVHNode& rightNode = nodeList[rightNodeIndex];
+        leftNode.firstPrim = leftPrimFirst;
+        leftNode.primCount = leftPrimCount;
+        updateBounds(leftNodeIndex);
+        rightNode.firstPrim = rightPrimFirst;
+        rightNode.primCount = rightPrimCount;
+        updateBounds(rightNodeIndex);
+
+        //Updating the current node
+        currNode.leftChild = leftNodeIndex;
+        currNode.rightChild = rightNodeIndex;
+
+        //To differntiate between a child node and a leaf node 
+        currNode.primCount = 0;
+
+        //Induction Step of recursion 
+        generateNodes(leftNodeIndex);
+        generateNodes(rightNodeIndex);
+    }
 }
 
 double Mesh::intersectTri(Ray r, Face f){
@@ -53,23 +152,37 @@ double Mesh::triArea(point3d a, point3d b, point3d c){
     return 0.5 * v.length();
 }
 
-void Mesh::intersect(Ray r, double t_min, double t_max, int mesh_index, hit_record &rec){
-    for(unsigned int i=0;i<faces.size();i++){
-        double t = intersectTri(r,faces[i]);
-        if(t>0){
-            if(t > t_min && t < t_max){
-                t_max = t;
-                rec.t = t;
-                rec.pt = r.origin + t * r.direction;
-                vec3d n = faces[i].normal;
-                double k = dot(r.direction,n);
-                rec.normal = (k<0)?n:-n;
-                rec.tangent = unit_vec(vertices[faces[i].v2].pos - vertices[faces[i].v1].pos);
-                rec.mat = this->mat;
-                rec.face_index = i;
-                rec.mesh_index = mesh_index;
-                rec.isHit = true;
+void Mesh::intersectBVH(Ray r, double t_min, double t_max, int mesh_index, hit_record &rec, int nodeIndex){
+    BVHNode& currNode = nodeList[nodeIndex];
+    bool isHit = intersectBox(r, t_min, t_max, currNode.bounds.nodeMin, currNode.bounds.nodeMax);
+    if(isHit){
+        if(currNode.primCount > 0){
+            //Leaf Node, so we need to check all primitives manually 
+            for(int i=currNode.firstPrim;i<currNode.firstPrim + currNode.primCount;i++){
+                int faceIndex = primitives[i];
+                double t = intersectTri(r, faces[faceIndex]);
+                if(t>0){
+                    if(t > t_min && t < t_max){
+                        t_max = t;
+                        rec.t = t;
+                        rec.pt = r.origin + t * r.direction;
+                        vec3d n = faces[faceIndex].normal;
+                        double k = dot(r.direction,n);
+                        rec.normal = (k<0)?n:-n;
+                        rec.tangent = unit_vec(vertices[faces[faceIndex].v2].pos - vertices[faces[faceIndex].v1].pos);
+                        rec.mat = this->mat;
+                        rec.face_index = faceIndex;
+                        rec.mesh_index = mesh_index;
+                        rec.isHit = true;
+                    }
+                }
             }
+        }else{
+            intersectBVH(r, t_min, t_max, mesh_index, rec, currNode.leftChild);
+            t_max = min(t_max, rec.t);
+            intersectBVH(r, t_min, t_max, mesh_index, rec, currNode.rightChild);
         }
+    }else{
+        return;
     }
 }

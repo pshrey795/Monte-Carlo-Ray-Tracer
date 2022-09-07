@@ -14,6 +14,7 @@ void Scene::loadScene(string path){
         cout << "ERROR::ASSIMP::" << importer.GetErrorString() << endl;
         return;
     }
+    bvhRoot = BVHRootNode();
     processNode(scene->mRootNode, scene);
 }
 
@@ -52,7 +53,10 @@ void Scene::loadCamera(string path){
 void Scene::processNode(aiNode* node, const aiScene* scene){
     for(unsigned int i = 0; i < node->mNumMeshes; i++){
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-        meshes.push_back(processMesh(mesh, scene));
+        Mesh newMesh = processMesh(mesh, scene);
+        bvhRoot.bounds.nodeMin = min(bvhRoot.bounds.nodeMin, newMesh.nodeList[0].bounds.nodeMin);
+        bvhRoot.bounds.nodeMax = max(bvhRoot.bounds.nodeMax, newMesh.nodeList[0].bounds.nodeMax);
+        meshes.push_back(newMesh);
     }
     for(unsigned int i = 0; i < node->mNumChildren; i++){
         processNode(node->mChildren[i], scene);
@@ -128,7 +132,7 @@ void Scene::castRays(vector<vector<color3d>>& pixelMap, int samples, int n_threa
                     Ray ray = cam->getRay(v, u);
                     new_color += traceRay(ray, 0);
                 }
-                pixelMap[x][y] = new_color / samples;
+                pixelMap[x][y] = new_color;
             }
         }
     }
@@ -148,7 +152,7 @@ color3d Scene::traceRay(Ray ray, int depth){
             color3d Lo = color3d(0.0f);
 
             //Emitted radiance 
-            color3d Le = rec.mat.Ke * color3d(255.0f);
+            color3d Le = rec.mat.Ke * color3d(1.0f);
             Lo += Le;
             
             //Incoming radiance using Monte Carlo Integration 
@@ -159,10 +163,10 @@ color3d Scene::traceRay(Ray ray, int depth){
             Ray wo(rec.pt, -ray.direction);
 
             //Local(Due to light sources)
-            Lo += computeLocalIllumination(wo, rec, depth, 10) / 2;
+            Lo += computeLocalIllumination(wo, rec, depth, 3) / 2;
 
             //Global(Due to indirect lighting from other objects)
-            Lo += computeGlobalIllumination(wo, rec, depth, 10) / 2;
+            Lo += computeGlobalIllumination(wo, rec, depth, 3) / 2;
 
             return Lo;
         }else{
@@ -175,7 +179,7 @@ color3d Scene::traceRay(Ray ray, int depth){
 color3d Scene::computeLocalIllumination(Ray wo, hit_record rec, int depth, int samples_per_source){
     color3d Li = color3d(0.0f);
     auto lightCones = this->getLightCones(rec.pt, rec.mesh_index);
-    for(int i = 0; i < lights.size(); i++){
+    for(unsigned int i = 0; i < lights.size(); i++){
         //Sampling in a cone made by the light object at the point of incidence
         double coneAngleCosine = lightCones[lights[i]];
         vec3d lightDir = meshes[lights[i]].centralVertex.pos - rec.pt;
@@ -220,13 +224,18 @@ color3d Scene::computeGlobalIllumination(Ray wo, hit_record rec, int depth, int 
 
 //Processing intersections(without acceleraation)
 hit_record Scene::intersect(Ray r){
+    //First check for intersection with the bounding box
+    bool isHit = intersectBox(r, 0.001, DBL_MAX, bvhRoot.bounds.nodeMin, bvhRoot.bounds.nodeMax);
+
     hit_record rec; 
-    //Non zero minimum for handling numerical errors
-    double t_min = 0.01;
-    for(unsigned int i = 0; i < this->meshes.size(); i++){
-        double t_max = rec.t;
-        this->meshes[i].intersect(r, t_min, t_max, i, rec);
-    } 
+    if(isHit){
+        //Non zero minimum for handling numerical errors
+        double t_min = 0.01;
+        for(unsigned int i = 0; i < this->meshes.size(); i++){
+            double t_max = rec.t;
+            this->meshes[i].intersectBVH(r, t_min, t_max, i, rec, 0);
+        } 
+    }
     return rec; 
 }
 

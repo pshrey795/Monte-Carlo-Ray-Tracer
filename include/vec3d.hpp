@@ -96,6 +96,8 @@ vec3d unit_vec(vec3d v);
 double dot(vec3d u,vec3d v);
 vec3d cross(vec3d u,vec3d v);
 double area(point3d p1,point3d p2,point3d p3);
+vec3d min(vec3d v, vec3d u);
+vec3d max(vec3d v, vec3d u);
 
 //Reflection/Refraction vectors
 vec3d reflect(vec3d incident_ray, vec3d normal);
