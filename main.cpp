@@ -39,7 +39,7 @@ int main(int argc, char** argv){
     string config_path = argv[2];
     Scene newScene = generate_scene(obj_path, config_path);
 
-    newScene.rayCast(pixelMap,8,8);
+    newScene.castRays(pixelMap,8,8);
     display();
 
     return 0;

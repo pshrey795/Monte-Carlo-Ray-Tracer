@@ -22,11 +22,13 @@ struct Vertex{
 struct Face{
     int v1,v2,v3;
     vec3d normal;
-    Face(int v1, int v2, int v3, vec3d normal){
+    vec3d centroid;
+    Face(int v1, int v2, int v3, vec3d normal, vec3d centroid){
         this->v1 = v1;
         this->v2 = v2;
         this->v3 = v3;
         this->normal = normal; 
+        this->centroid = centroid;
     }
 };
 
@@ -35,6 +37,7 @@ struct Material{
     color3d Kd;         //diffuse
     color3d Ks;         //specular
     color3d Ke;         //emission (light source)
+    float n;            //specularity 
 
     //Set default constructor
     Material(){
@@ -42,6 +45,7 @@ struct Material{
         Kd = color3d(0,0,0);
         Ks = color3d(0,0,0);
         Ke = color3d(0,0,0);
+        n = 0;
     }
 };
 

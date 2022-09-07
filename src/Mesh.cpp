@@ -9,38 +9,41 @@ Mesh::Mesh(vector<Vertex> vertices, vector<unsigned int> indices, Vertex central
         point3d a = vertices[indices[i]].pos;
         point3d b = vertices[indices[i+1]].pos;
         point3d c = vertices[indices[i+2]].pos;
+        vec3d centroid = (a + b + c) / 3;
         vec3d normal = unit_vec(cross(b-a, c-a));
-        faces.push_back(Face(indices[i], indices[i+1], indices[i+2], normal));
-    }
-}
-
-double Mesh::intersectPlane(Ray r, Plane p){
-    double k = dot(r.direction,p.n);
-    if(k==0){
-        return -1;
-    }else{
-        double t = dot(p.pt - r.origin,p.n) / k;
-        return t;
+        faces.push_back(Face(indices[i], indices[i+1], indices[i+2], normal, centroid));
     }
 }
 
 double Mesh::intersectTri(Ray r, Face f){
+    //Moller Trumbore Algorithm
     point3d a = this->vertices[f.v1].pos;
     point3d b = this->vertices[f.v2].pos;
     point3d c = this->vertices[f.v3].pos;
-    Plane p(a,unit_vec(cross(b - a, c - a)));
-    double t = intersectPlane(r,p);
-    point3d pt = r.origin + t * r.direction;
-    double A = this->triArea(a,b,c);
-    double A1 = this->triArea(pt,b,c);
-    double A2 = this->triArea(pt,a,c);
-    double A3 = this->triArea(pt,a,b);
-    bool isInside = (abs((A1 + A2 + A3) - A) < DELTA);
-    if(isInside){
-        return t;
-    }else{
+    
+    vec3d edge1 = b - a;
+    vec3d edge2 = c - a;
+    vec3d pVec = cross(r.direction, edge2);
+    double M = dot(pVec, edge1);
+
+    //Rejecting if the the ray is parallel to the triangle
+    if(checkEquality(M, 0.0f)){
         return -1;
     }
+
+    double invCosine = 1.0f / M;
+    vec3d tVec = r.origin - a;
+    double u = invCosine * dot(pVec, tVec);
+    vec3d qVec = cross(tVec, edge1);
+    double v = invCosine * dot(qVec, r.direction);
+
+    //Rejecting if the intersection point is outside the triangle
+    if(u < 0.0f || u > 1.0f || v < 0.0f || u + v > 1.0f){
+        return -1;
+    }
+
+    double t = invCosine * dot(qVec, edge2);
+    return t;
 }
 
 double Mesh::triArea(point3d a, point3d b, point3d c){
@@ -58,7 +61,9 @@ void Mesh::intersect(Ray r, double t_min, double t_max, int mesh_index, hit_reco
                 t_max = t;
                 rec.t = t;
                 rec.pt = r.origin + t * r.direction;
-                rec.normal = faces[i].normal;
+                vec3d n = faces[i].normal;
+                double k = dot(r.direction,n);
+                rec.normal = (k<0)?n:-n;
                 rec.tangent = unit_vec(vertices[faces[i].v2].pos - vertices[faces[i].v1].pos);
                 rec.mat = this->mat;
                 rec.face_index = i;
