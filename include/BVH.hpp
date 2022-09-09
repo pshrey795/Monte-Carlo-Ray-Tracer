@@ -9,6 +9,14 @@
 struct nodeBounds {
     point3d nodeMin;
     point3d nodeMax;
+    void expand(point3d p){
+        nodeMin = min(nodeMin, p);
+        nodeMax = max(nodeMax, p);
+    }
+    double surfaceArea(){
+        vec3d diag = nodeMax - nodeMin;
+        return 2 * (diag[0] * diag[1] + diag[0] * diag[2] + diag[1] * diag[2]);
+    }
 };
 
 //Structure of a normal BVH Node

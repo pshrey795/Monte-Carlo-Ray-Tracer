@@ -4,6 +4,8 @@
 #include <bits/stdc++.h>
 using namespace std;
 
+#define INV_RAND_MAX 1.0 / (double)RAND_MAX
+
 class vec3d{
 
     public:

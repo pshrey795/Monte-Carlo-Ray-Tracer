@@ -43,8 +43,8 @@ int main(int argc, char** argv){
     string config_path = argv[2];
     Scene newScene = generate_scene(obj_path, config_path);
 
-    newScene.castRays(pixelMap,8,8);
-    display(8);
+    newScene.castRays(pixelMap,2,16);
+    display(2);
 
     return 0;
 }

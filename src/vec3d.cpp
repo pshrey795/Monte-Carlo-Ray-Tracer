@@ -94,5 +94,6 @@ color3d readColor(string s){
 
 //Utilities
 double random_double(){
-    return rand() / (RAND_MAX + 1.0);
+    double r = (double)rand() * INV_RAND_MAX;
+    return r;
 }

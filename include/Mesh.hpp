@@ -50,6 +50,9 @@ class Mesh : public Object3D {
         void updateBounds(int nodeIndex);
         void generateNodes(int nodeIndex);
 
+        //Surface Area Heuristic 
+        double surfaceAreaMeasure(BVHNode& node, int axis, double currPos);
+
 };
 
 #endif

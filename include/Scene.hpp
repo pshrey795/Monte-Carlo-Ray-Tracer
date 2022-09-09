@@ -10,8 +10,7 @@
 #include<assimp/scene.h>
 #include<assimp/postprocess.h>
 
-#define MAX_DEPTH 2
-#define BG_COLOR color3d(0.5,0.7,0.9);
+#define MAX_DEPTH 5
 
 using namespace std;
 
@@ -43,8 +42,10 @@ class Scene {
         hit_record intersect(Ray r);   
 
         //Computing Illuminations 
+        color3d traceDiffuseRay(Ray wo, hit_record rec, int depth);
         color3d computeLocalIllumination(Ray wo, hit_record rec, int depth, int samples_per_source);
         color3d computeGlobalIllumination(Ray wo, hit_record rec, int depth, int samples); 
+        color3d traceSpecularRay(Ray wo, hit_record rec, int depth);
     
 };
 

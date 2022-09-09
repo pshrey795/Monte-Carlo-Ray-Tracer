@@ -43,6 +43,27 @@ void Mesh::updateBounds(int nodeIndex){
     }
 }
 
+double Mesh::surfaceAreaMeasure(BVHNode& currNode, int axis, double currPos){
+    nodeBounds leftBound, rightBound;
+    int leftCount = 0, rightCount = 0;
+    for(int i=0;i<currNode.primCount;i++){
+        Face& currFace = faces[primitives[currNode.firstPrim + i]];
+        if(currFace.centroid[axis] < currPos){
+            leftCount++;
+            leftBound.expand(vertices[currFace.v1].pos);
+            leftBound.expand(vertices[currFace.v2].pos);
+            leftBound.expand(vertices[currFace.v3].pos);
+        }else{
+            rightCount++;
+            rightBound.expand(vertices[currFace.v1].pos);
+            rightBound.expand(vertices[currFace.v2].pos);
+            rightBound.expand(vertices[currFace.v3].pos);
+        }
+    } 
+    double cost = leftCount * leftBound.surfaceArea() + rightCount * rightBound.surfaceArea();
+    return (cost > 0)? cost : 1e30;
+}
+
 void Mesh::generateNodes(int nodeIndex){
     BVHNode& currNode = nodeList[nodeIndex];
 
@@ -50,25 +71,36 @@ void Mesh::generateNodes(int nodeIndex){
         //Recursion base case
         return;
     }else{
-        //We divide perpendicular to the longest axis 
-        //0: x, 1: y, 2: z
-        vec3d axisLength = currNode.bounds.nodeMax - currNode.bounds.nodeMin;
-        int longestAxis = 0;
-        if(axisLength.y() > axisLength.x()){
-            longestAxis = 1;
-        }else if(axisLength.z() > axisLength.x()){
-            longestAxis = 2;
+        //Surface Area Heuristic
+        int splitAxis = -1;
+        double splitPos = 0;
+        double splitCost = DBL_MAX;
+
+        for(int axis = 0; axis < 3; axis++){
+            for(int i = 0; i < currNode.primCount; i++){
+                Face& currFace = faces[primitives[currNode.firstPrim + i]];
+                double currPos = currFace.centroid[axis];
+                double currCost = surfaceAreaMeasure(currNode, axis, currPos);
+                if(currCost < splitCost){
+                    splitCost = currCost;
+                    splitAxis = axis;
+                    splitPos = currPos;
+                }
+            }
         }
-        
-        //Defining the splitting plane
-        int midValue = currNode.bounds.nodeMin[longestAxis] + (axisLength[longestAxis] / 2); 
+
+        //Comparing the best cost of splitting with the cost of the parent for early termination 
+        double parentCost = currNode.bounds.surfaceArea() * currNode.primCount;
+        if(parentCost <= splitCost){
+            return;
+        }
 
         //Partition the faces (in place) into two sets 
         int i = currNode.firstPrim;
         int j = currNode.firstPrim + currNode.primCount - 1;
         while(i <= j){
             Face currFace = faces[primitives[i]];
-            if(currFace.centroid[longestAxis] < midValue){
+            if(currFace.centroid[splitAxis] < splitPos){
                 i++;
             }else{
                 swap(primitives[i], primitives[j]);
