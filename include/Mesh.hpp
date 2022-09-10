@@ -31,8 +31,8 @@ struct Face{
 class Mesh : public Object3D {
     public:
         vector<Vertex> vertices;
-        vector<Face> faces;
-        vector<BVHNode> nodeList;   
+        vector<Face> faces;  
+        vector<pair<BVHNode, int>> nodeList; 
         bool isLight = false;
         Vertex centralVertex;  
         Mesh(vector<Vertex> vertices, vector<unsigned int> indices, Vertex centralVertex, Material mat, int min_primitives);
@@ -46,10 +46,11 @@ class Mesh : public Object3D {
         vector<int> primitives; 
         int min_primitives_per_node;
         int currentNodeIndex = 0; 
-        int numNodes = 0;
         void constructBVH();
         void updateBounds(int nodeIndex);
-        void generateNodes(int nodeIndex);
+
+        //Returns the index of the right child 
+        int generateNodes(int nodeIndex);
 
         //Surface Area Heuristic 
         double surfaceAreaMeasure(BVHNode& node, int axis, double currPos);

@@ -59,8 +59,8 @@ void Scene::processNode(aiNode* node, const aiScene* scene){
     for(unsigned int i = 0; i < node->mNumMeshes; i++){
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
         Mesh newMesh = processMesh(mesh, scene);
-        bvhRoot.bounds.nodeMin = min(bvhRoot.bounds.nodeMin, newMesh.nodeList[0].bounds.nodeMin);
-        bvhRoot.bounds.nodeMax = max(bvhRoot.bounds.nodeMax, newMesh.nodeList[0].bounds.nodeMax);
+        bvhRoot.bounds.nodeMin = min(bvhRoot.bounds.nodeMin, newMesh.nodeList[0].first.bounds.nodeMin);
+        bvhRoot.bounds.nodeMax = max(bvhRoot.bounds.nodeMax, newMesh.nodeList[0].first.bounds.nodeMax);
         meshes.push_back(newMesh);
     }
     for(unsigned int i = 0; i < node->mNumChildren; i++){

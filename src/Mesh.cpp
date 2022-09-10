@@ -14,7 +14,7 @@ Mesh::Mesh(vector<Vertex> vertices, vector<unsigned int> indices, Vertex central
         vec3d normal = unit_vec(cross(b-a, c-a));
         faces.push_back(Face(indices[i], indices[i+1], indices[i+2], normal, centroid));
     }
-    nodeList = vector<BVHNode>(2*faces.size(), BVHNode());
+    nodeList = vector<pair<BVHNode,int>>(2*faces.size(), make_pair(BVHNode(),-1));
     constructBVH();
 }
 
@@ -25,15 +25,15 @@ void Mesh::constructBVH(){
         primitives.push_back(i);
     }
 
-    BVHNode& currNode = nodeList[currentNodeIndex];
+    BVHNode& currNode = nodeList[currentNodeIndex].first;
     currNode.primCount = faces.size();
-    numNodes++;
-    updateBounds(currentNodeIndex);
-    generateNodes(currentNodeIndex);
+    currentNodeIndex++;
+    updateBounds(0);
+    nodeList[0].second = generateNodes(0);
 }
 
 void Mesh::updateBounds(int nodeIndex){
-    BVHNode& currNode = nodeList[nodeIndex];
+    BVHNode& currNode = nodeList[nodeIndex].first;
     for(int i = currNode.firstPrim; i < currNode.primCount; i++){
         Face currFace = faces[primitives[i]];
         point3d a = vertices[currFace.v1].pos;
@@ -65,12 +65,12 @@ double Mesh::surfaceAreaMeasure(BVHNode& currNode, int axis, double currPos){
     return (cost > 0)? cost : 1e30;
 }
 
-void Mesh::generateNodes(int nodeIndex){
-    BVHNode& currNode = nodeList[nodeIndex];
+int Mesh::generateNodes(int nodeIndex){
+    BVHNode& currNode = nodeList[nodeIndex].first;
 
     if(currNode.primCount < min_primitives_per_node){
         //Recursion base case
-        return;
+        return -1;
     }else{
         //Surface Area Heuristic
         int splitAxis = -1;
@@ -93,7 +93,7 @@ void Mesh::generateNodes(int nodeIndex){
         //Comparing the best cost of splitting with the cost of the parent for early termination 
         double parentCost = currNode.bounds.surfaceArea() * currNode.primCount;
         if(parentCost <= splitCost){
-            return;
+            return -1;
         }
 
         //Partition the faces (in place) into two sets 
@@ -119,31 +119,31 @@ void Mesh::generateNodes(int nodeIndex){
             //Occurs when the centroids of all the faces are on one side of the split plane
             //While the actual bounds of the plane are across the the plane
             //In this case, we just return since no new children need to be created 
-            return;
+            return -1;
         }
 
+        //Induction Step of recursion 
         //Creating and updating new nodes
-        int leftNodeIndex = numNodes++;
-        int rightNodeIndex = numNodes++;
-        BVHNode& leftNode = nodeList[leftNodeIndex];
-        BVHNode& rightNode = nodeList[rightNodeIndex];
+        int leftNodeIndex = currentNodeIndex++;
+        BVHNode& leftNode = nodeList[leftNodeIndex].first;
         leftNode.firstPrim = leftPrimFirst;
         leftNode.primCount = leftPrimCount;
         updateBounds(leftNodeIndex);
+        int leftNodeRightChild = generateNodes(leftNodeIndex);
+        nodeList[leftNodeIndex].second = leftNodeRightChild;
+
+        int rightNodeIndex = currentNodeIndex++;
+        BVHNode& rightNode = nodeList[rightNodeIndex].first;
         rightNode.firstPrim = rightPrimFirst;
         rightNode.primCount = rightPrimCount;
         updateBounds(rightNodeIndex);
-
-        //Updating the current node
-        currNode.leftChild = leftNodeIndex;
-        currNode.rightChild = rightNodeIndex;
+        int rightNodeRightChild = generateNodes(rightNodeIndex);
+        nodeList[rightNodeIndex].second = rightNodeRightChild;
 
         //To differntiate between a child node and a leaf node 
         currNode.primCount = 0;
 
-        //Induction Step of recursion 
-        generateNodes(leftNodeIndex);
-        generateNodes(rightNodeIndex);
+        return rightNodeIndex;
     }
 }
 
@@ -186,7 +186,7 @@ double Mesh::triArea(point3d a, point3d b, point3d c){
 }
 
 void Mesh::intersectBVH(Ray r, double t_min, double t_max, int mesh_index, hit_record &rec, int nodeIndex){
-    BVHNode& currNode = nodeList[nodeIndex];
+    BVHNode& currNode = nodeList[nodeIndex].first;
     bool isHit = intersectBox(r, t_min, t_max, currNode.bounds.nodeMin, currNode.bounds.nodeMax);
     if(isHit){
         if(currNode.primCount > 0){
@@ -211,9 +211,9 @@ void Mesh::intersectBVH(Ray r, double t_min, double t_max, int mesh_index, hit_r
                 }
             }
         }else{
-            intersectBVH(r, t_min, t_max, mesh_index, rec, currNode.leftChild);
+            intersectBVH(r, t_min, t_max, mesh_index, rec, nodeIndex+1);
             t_max = min(t_max, rec.t);
-            intersectBVH(r, t_min, t_max, mesh_index, rec, currNode.rightChild);
+            intersectBVH(r, t_min, t_max, mesh_index, rec, nodeList[nodeIndex].second);
         }
     }else{
         return;

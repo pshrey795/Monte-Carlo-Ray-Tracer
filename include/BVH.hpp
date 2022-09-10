@@ -21,12 +21,10 @@ struct nodeBounds {
 //Structure of a normal BVH Node
 struct BVHNode {
     nodeBounds bounds;
-    int leftChild, rightChild;
     int firstPrim, primCount;
     BVHNode(){
         bounds.nodeMax = point3d(DBL_MIN);
         bounds.nodeMin = point3d(DBL_MAX);
-        leftChild = rightChild = 0;
         firstPrim = primCount = 0;
     }
 };
