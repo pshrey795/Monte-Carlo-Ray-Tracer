@@ -219,3 +219,52 @@ void Mesh::intersectBVH(Ray r, double t_min, double t_max, int mesh_index, hit_r
         return;
     }
 }
+
+//Ordered BVH Traversal
+void Mesh::intersectBVH(Ray r, double t_min, double t_max, int mesh_index, hit_record &rec){
+    stack<pair<int,double>> nodeStack;
+    double t = intersectBoxValue(r, t_min, t_max, nodeList[0].first.bounds.nodeMin, nodeList[0].first.bounds.nodeMax);
+    nodeStack.push(make_pair(0,t));
+    while(!nodeStack.empty()){
+        auto p = nodeStack.top();
+        int nodeIndex = p.first;
+        nodeStack.pop();
+        if(p.second != -1){
+            BVHNode& currNode = nodeList[nodeIndex].first;
+            if(currNode.primCount > 0){
+                //Leaf Node, so need to check manually
+                for(int i=currNode.firstPrim;i<currNode.firstPrim + currNode.primCount;i++){
+                    int faceIndex = primitives[i];
+                    double t = intersectTri(r, faces[faceIndex]);
+                    if(t>0){
+                        if(t > t_min && t < t_max){
+                            t_max = t;
+                            rec.t = t;
+                            rec.pt = r.origin + t * r.direction;
+                            vec3d n = faces[faceIndex].normal;
+                            double k = dot(r.direction,n);
+                            rec.normal = (k<0)?n:-n;
+                            rec.tangent = unit_vec(vertices[faces[faceIndex].v2].pos - vertices[faces[faceIndex].v1].pos);
+                            rec.mat = this->mat;
+                            rec.face_index = faceIndex;
+                            rec.mesh_index = mesh_index;
+                            rec.isHit = true;
+                        }
+                    }
+                }
+            }else{
+                //Internal Node, so we check for its children and add them to the stack in the ray order
+                //The box which is closer to the ray origin is on the top
+                double t_left = intersectBoxValue(r, t_min, t_max, nodeList[nodeIndex+1].first.bounds.nodeMin, nodeList[nodeIndex+1].first.bounds.nodeMax);
+                double t_right = intersectBoxValue(r, t_min, t_max, nodeList[nodeList[nodeIndex].second].first.bounds.nodeMin, nodeList[nodeList[nodeIndex].second].first.bounds.nodeMax);
+                if(t_left <= t_right){
+                    nodeStack.push(make_pair(nodeIndex+1,t_left));
+                    nodeStack.push(make_pair(nodeList[nodeIndex].second,t_right));
+                }else{
+                    nodeStack.push(make_pair(nodeList[nodeIndex].second,t_right));
+                    nodeStack.push(make_pair(nodeIndex+1,t_left));
+                }
+            }
+        }
+    }
+}

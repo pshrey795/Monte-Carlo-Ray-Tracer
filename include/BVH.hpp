@@ -39,5 +39,6 @@ struct BVHRootNode {
 };
 
 bool intersectBox(Ray r, double t_min, double t_max, point3d min, point3d max);
+double intersectBoxValue(Ray r, double t_min, double t_max, point3d min, point3d max);
 
 #endif

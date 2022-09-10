@@ -37,6 +37,7 @@ class Mesh : public Object3D {
         Vertex centralVertex;  
         Mesh(vector<Vertex> vertices, vector<unsigned int> indices, Vertex centralVertex, Material mat, int min_primitives);
         void intersectBVH(Ray r, double t_min, double t_max, int mesh_index, hit_record &rec, int nodeIndex);
+        void intersectBVH(Ray r, double t_min, double t_max, int mesh_index, hit_record &rec);
 
     private:
         double intersectTri(Ray r, Face f);
@@ -46,6 +47,7 @@ class Mesh : public Object3D {
         vector<int> primitives; 
         int min_primitives_per_node;
         int currentNodeIndex = 0; 
+        int numNodes = 0;
         void constructBVH();
         void updateBounds(int nodeIndex);
 

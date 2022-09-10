@@ -255,7 +255,7 @@ hit_record Scene::intersect(Ray r){
         double t_min = 0.01;
         for(unsigned int i = 0; i < this->meshes.size(); i++){
             double t_max = rec.t;
-            this->meshes[i].intersectBVH(r, t_min, t_max, i, rec, 0);
+            this->meshes[i].intersectBVH(r, t_min, t_max, i, rec);
         } 
     }
     return rec; 

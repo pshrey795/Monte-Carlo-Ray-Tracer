@@ -1,6 +1,6 @@
 camera{
-    278 273 -200
-    278 273 0
+    278 400 -200
+    278 400 0
     0 1 0
     800 
     800
@@ -9,9 +9,9 @@ camera{
 
 parameters{
     nthreads: 16
-    samples_per_pixel: 4
-    direct_samples_per_ray: 5
-    indirect_samples_per_ray: 5
+    samples_per_pixel: 8
+    direct_samples_per_ray: 2
+    indirect_samples_per_ray: 2
     tracing_depth: 2
     min_primitives_per_box: 2
 }
