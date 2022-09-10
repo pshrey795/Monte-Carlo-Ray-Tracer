@@ -1,9 +1,13 @@
 #include "../include/Scene.hpp"
 #include "../include/Sampler.hpp"
 
-Scene::Scene(string obj_path, string config_path){
+Scene::Scene(string obj_path, string config_path, int direct_samples, int indirect_samples, int max_depth, int min_primitives){
     loadScene(obj_path);
     loadCamera(config_path);
+    this->direct_samples_per_ray = direct_samples;
+    this->indirect_samples_per_ray = indirect_samples;
+    this->tracing_depth = max_depth;
+    this->bvh_min_primitives = min_primitives;
 }
 
 void Scene::loadScene(string path){
@@ -48,6 +52,7 @@ void Scene::loadCamera(string path){
 
     //Creating camera
     this->cam = new Camera(camPos, lookAt, camUp, screen_width, screen_height, screen_depth);
+    myFile.close();
 }
 
 void Scene::processNode(aiNode* node, const aiScene* scene){
@@ -106,7 +111,7 @@ Mesh Scene::processMesh(aiMesh* mesh, const aiScene* scene){
         lights.push_back(this->meshes.size());
     }
 
-    return Mesh(vertices, indices, centralVertex, mat);
+    return Mesh(vertices, indices, centralVertex, mat, bvh_min_primitives);
 }
 
 //Ray Casting
@@ -139,12 +144,7 @@ void Scene::castRays(vector<vector<color3d>>& pixelMap, int samples, int n_threa
 
 //Ray Tracing
 color3d Scene::traceRay(Ray ray, int depth){
-    //Russian Roulette
-    //Termination probability
-    float q = (depth==0)?0.0f:0.3f;
-    float r = random_double();
-
-    if(depth > MAX_DEPTH || r < q){
+    if(depth > tracing_depth){
         return color3d(0.0f);
     }else{
         //Obtain the intersection point of the ray with the current geometry 
@@ -152,31 +152,31 @@ color3d Scene::traceRay(Ray ray, int depth){
 
         //Light Transport Algorithm 
         if(rec.isHit){
-            //Outgoing radiance
-            color3d Lo = color3d(0.0f);
-
             if(!(rec.mat.Ke == color3d(0.0f))){
                 //Current object is a light source 
-                Lo += (rec.mat.Ke * dot(rec.normal, -ray.direction) * color3d(1.0f));
+                if(depth == 0){
+                    return dot(rec.normal, -ray.direction) * color3d(1.0f) + (rec.mat.Ke * dot(rec.normal, -ray.direction) * color3d(1.0f));
+                }else{
+                    return (rec.mat.Ke * dot(rec.normal, -ray.direction) * color3d(1.0f));
+                }
             }else{
                 //Incoming radiance using Monte Carlo Integration 
                 //Break total incoming radiation into two parts: 
                 //Local + Global 
 
-                //Outgoing Ray
-                Ray wo(rec.pt, -ray.direction);
+                //Outgoing radiance
+                color3d Lo = color3d(0.0f);
                 
-                //Tracing Diffuse Rays
-                Lo += (traceDiffuseRay(wo, rec, depth));
+                //Tracing Diffuse and Ambient Rays
+                color3d diffuseValue = (traceDiffuseRay(rec, depth));
+                Lo = Lo + diffuseValue;
 
                 //Tracing Specular Rays
-                Lo += (traceSpecularRay(wo, rec, depth));
+                color3d specularValue = traceSpecularRay(ray, rec, depth);
+                Lo = Lo + specularValue;
 
-                //Computing Ambient component
-                Lo += (rec.mat.Ka * Lo);
+                return Lo;
             }
-
-            return Lo/(1.0f-q);
         }else{
             return color3d(0.0f);
         }
@@ -184,28 +184,26 @@ color3d Scene::traceRay(Ray ray, int depth){
 }
 
 //Tracing Secondary Rays 
-color3d Scene::traceDiffuseRay(Ray wo, hit_record rec, int depth){
+color3d Scene::traceDiffuseRay(hit_record rec, int depth){
     color3d Ld(0.0f);
 
     //Local(Due to light sources)
-    Ld += computeLocalIllumination(wo, rec, depth, 10) * 0.8;
+    Ld = Ld + (computeLocalIllumination(rec, depth, direct_samples_per_ray) * 0.8);
 
     //Global(Due to indirect lighting from other objects)
-    Ld += computeGlobalIllumination(wo, rec, depth, 10) * 0.2;
+    Ld = Ld + (computeGlobalIllumination(rec, depth, indirect_samples_per_ray) * 0.2);
 
     return Ld;
 }
 
 color3d Scene::traceSpecularRay(Ray wo, hit_record rec, int depth){
-    color3d Ls = color3d(0.0f);
-    vec3d wi = reflect(-wo.direction, rec.normal);
+    vec3d wi = reflect(wo.direction, rec.normal);
     Ray secondaryRay(rec.pt, wi);
-    Ls += (rec.mat.Ks * traceRay(secondaryRay, depth+1));
-    return Ls;
+    return (rec.mat.Ks * traceRay(secondaryRay, depth+1));
 }
 
 //Computing Illuminations 
-color3d Scene::computeLocalIllumination(Ray wo, hit_record rec, int depth, int samples_per_source){
+color3d Scene::computeLocalIllumination(hit_record rec, int depth, int samples_per_source){
     color3d Li = color3d(0.0f);
     auto lightCones = this->getLightCones(rec.pt, rec.mesh_index);
     for(unsigned int i = 0; i < lights.size(); i++){
@@ -213,17 +211,17 @@ color3d Scene::computeLocalIllumination(Ray wo, hit_record rec, int depth, int s
         double coneAngleCosine = lightCones[lights[i]];
         vec3d lightDir = meshes[lights[i]].centralVertex.pos - rec.pt;
         for(int j = 0; j < samples_per_source; j++){
-            vec3d wi = sampleCone(lightDir,cross(lightDir,rec.normal),coneAngleCosine);
-            double cosTheta = dot(wi,rec.normal);
+            vec3d wi = sampleCone(unit_vec(lightDir),unit_vec(cross(lightDir,rec.normal)),coneAngleCosine);
+            double cosTheta = dot(unit_vec(wi),rec.normal);
             if(cosTheta > 0){
                 color3d kd = rec.mat.Kd;
                 Ray shadowRay(rec.pt, wi);
                 hit_record shadowRec = intersect(shadowRay);
                 if(shadowRec.isHit){
                     if(shadowRec.mesh_index == lights[i]){
-                        double lightCosTheta = dot(-wi, shadowRec.normal);
-                        color3d Li_local = shadowRec.mat.Ke * color3d(1.0f) * lightCosTheta;
-                        Li += (kd * cosTheta * Li_local) / (samples_per_source * (1/(2 * M_PI * (1 - coneAngleCosine))));
+                        double lightCosTheta = dot(unit_vec(-wi), shadowRec.normal);
+                        color3d Li_local = shadowRec.mat.Ke * color3d(1.0f) * lightCosTheta + shadowRec.mat.Ka * color3d(1.0f);
+                        Li = (Li + ((kd * cosTheta * Li_local) / (samples_per_source)));
                     }
                 }
             }
@@ -232,7 +230,7 @@ color3d Scene::computeLocalIllumination(Ray wo, hit_record rec, int depth, int s
     return Li;
 }
 
-color3d Scene::computeGlobalIllumination(Ray wo, hit_record rec, int depth, int samples){
+color3d Scene::computeGlobalIllumination(hit_record rec, int depth, int samples){
     color3d Li(0.0f);
     for(int i = 0; i < samples; i++){
         //Sampling in a hemisphere for indirect lighting 
@@ -241,7 +239,7 @@ color3d Scene::computeGlobalIllumination(Ray wo, hit_record rec, int depth, int 
         color3d kd = rec.mat.Kd;
         Ray secondaryRay(rec.pt, wi);
         color3d Li_local = traceRay(secondaryRay, depth+1);
-        Li += (kd * cosTheta * Li_local) / (samples * ((cosTheta)/(M_PI)));
+        Li = Li + ((kd * cosTheta * Li_local) / (samples * (1 / (2 * M_PI))));
     }
     return Li;
 }
@@ -270,7 +268,7 @@ unordered_map<unsigned int, double> Scene::getLightCones(point3d p, int curr_ind
         int lightIndex = lights[i];
         if(lightIndex != curr_index){
             double cone_angle_cosine = this->getLightCone(p, lightIndex); 
-            light_cones[lightIndex] = cone_angle_cosine;
+            light_cones.insert({lightIndex, cone_angle_cosine});
         }
     }
     return light_cones; 
@@ -278,11 +276,12 @@ unordered_map<unsigned int, double> Scene::getLightCones(point3d p, int curr_ind
 
 double Scene::getLightCone(point3d p, int index){
     point3d centralVertex = this->meshes[index].centralVertex.pos;
-    vec3d centralLightDir = centralVertex - p;
+    vec3d centralLightDir = unit_vec(centralVertex - p);
     double cosine = 1.0f;
     for(unsigned int i=0;i<this->meshes[index].vertices.size();i++){
-        vec3d lightDir = this->meshes[index].vertices[i].pos - p;
-        cosine = min(cosine, dot(centralLightDir, lightDir) / (centralLightDir.length() * lightDir.length()));
+        vec3d lightDir = unit_vec(this->meshes[index].vertices[i].pos - p);
+        double newCosine = dot(centralLightDir, lightDir);
+        cosine = min(cosine, newCosine);
     }
     return cosine;
 }

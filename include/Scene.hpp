@@ -10,13 +10,11 @@
 #include<assimp/scene.h>
 #include<assimp/postprocess.h>
 
-#define MAX_DEPTH 5
-
 using namespace std;
 
 class Scene {
     public:
-        Scene(string obj_path, string config_path);
+        Scene(string obj_path, string config_path, int direct_samples, int indirect_samples, int max_depth, int min_primitives);
 
         //Casting rays for starting the ray tracing
         void castRays(vector<vector<color3d>>& pixelMap, int samples, int n_threads);
@@ -42,10 +40,16 @@ class Scene {
         hit_record intersect(Ray r);   
 
         //Computing Illuminations 
-        color3d traceDiffuseRay(Ray wo, hit_record rec, int depth);
-        color3d computeLocalIllumination(Ray wo, hit_record rec, int depth, int samples_per_source);
-        color3d computeGlobalIllumination(Ray wo, hit_record rec, int depth, int samples); 
+        color3d traceDiffuseRay(hit_record rec, int depth);
+        color3d computeLocalIllumination(hit_record rec, int depth, int samples_per_source);
+        color3d computeGlobalIllumination(hit_record rec, int depth, int samples); 
         color3d traceSpecularRay(Ray wo, hit_record rec, int depth);
+
+        //Parameters for sampling
+        int direct_samples_per_ray;
+        int indirect_samples_per_ray;
+        int tracing_depth;
+        int bvh_min_primitives;
     
 };
 

@@ -12,8 +12,8 @@ vec3d sampleHemisphere(vec3d normal, vec3d tangent){
 
     //Calculating the weights along each axis
     double x1 = sin(theta) * cos(phi); 
-    double y1 = sin(theta) * sin(phi);
-    double z1 = cos(theta);
+    double y1 = cos(theta);
+    double z1 = sin(theta) * sin(phi);
 
     //Calculating the sampled direction
     return unit_vec(x1 * x + y1 * y + z1 * z);
@@ -32,8 +32,8 @@ vec3d sampleCone(vec3d normal, vec3d tangent, double angleCosine){
 
     //Calculating the weights along each axis
     double x1 = sin(theta) * cos(phi); 
-    double y1 = sin(theta) * sin(phi);
-    double z1 = cos(theta);
+    double y1 = cos(theta);
+    double z1 = sin(theta) * sin(phi);
 
     //Calculating the sampled direction
     return unit_vec(x1 * x + y1 * y + z1 * z);

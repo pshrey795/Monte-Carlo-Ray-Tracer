@@ -35,7 +35,7 @@ class Mesh : public Object3D {
         vector<BVHNode> nodeList;   
         bool isLight = false;
         Vertex centralVertex;  
-        Mesh(vector<Vertex> vertices, vector<unsigned int> indices, Vertex centralVertex, Material mat);
+        Mesh(vector<Vertex> vertices, vector<unsigned int> indices, Vertex centralVertex, Material mat, int min_primitives);
         void intersectBVH(Ray r, double t_min, double t_max, int mesh_index, hit_record &rec, int nodeIndex);
 
     private:
@@ -44,6 +44,7 @@ class Mesh : public Object3D {
 
         //BVH Construction routines
         vector<int> primitives; 
+        int min_primitives_per_node;
         int currentNodeIndex = 0; 
         int numNodes = 0;
         void constructBVH();

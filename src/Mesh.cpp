@@ -1,8 +1,9 @@
 #include "../include/Mesh.hpp"
 
-Mesh::Mesh(vector<Vertex> vertices, vector<unsigned int> indices, Vertex centralVertex, Material mat){
+Mesh::Mesh(vector<Vertex> vertices, vector<unsigned int> indices, Vertex centralVertex, Material mat, int min_primitives){
     this->vertices = vertices;
     this->mat = mat;
+    this->min_primitives_per_node = min_primitives;
     this->centralVertex = centralVertex;
     this->isLight = !(mat.Ke == color3d(0,0,0));
     for(unsigned int i=0;i<indices.size();i+=3){
@@ -67,7 +68,7 @@ double Mesh::surfaceAreaMeasure(BVHNode& currNode, int axis, double currPos){
 void Mesh::generateNodes(int nodeIndex){
     BVHNode& currNode = nodeList[nodeIndex];
 
-    if(currNode.primCount < MIN_PRIM_COUNT){
+    if(currNode.primCount < min_primitives_per_node){
         //Recursion base case
         return;
     }else{

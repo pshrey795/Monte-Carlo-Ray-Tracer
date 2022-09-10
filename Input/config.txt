@@ -6,3 +6,12 @@ camera{
     800
     200
 }
+
+parameters{
+    nthreads: 16
+    samples_per_pixel: 16
+    direct_samples_per_ray: 2
+    indirect_samples_per_ray: 2
+    tracing_depth: 2
+    min_primitives_per_box: 2
+}

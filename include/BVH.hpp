@@ -2,7 +2,6 @@
 #define BVH_HPP
 
 #include "Ray.hpp"
-#define MIN_PRIM_COUNT 2
 
 //Bounds of a BVH node depending upon the type of the bounding box used 
 //AABB as of now 

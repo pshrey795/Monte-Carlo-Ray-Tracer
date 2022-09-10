@@ -8,7 +8,6 @@ rtrace: main.cpp src/*.cpp
 
 run: rtrace 
 	./rtrace Input/$(INPUT_FILE) Input/$(CONFIG_FILE) > Outputs/output.ppm
-	./show.sh
 
 show: Outputs/output.ppm show.sh
 	chmod a+x show.sh

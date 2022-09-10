@@ -18,10 +18,10 @@ struct Material{
 
     //Set default constructor
     Material(){
-        Ka = color3d(0,0,0);
-        Kd = color3d(0,0,0);
-        Ks = color3d(0,0,0);
-        Ke = color3d(0,0,0);
+        Ka = color3d(0.0f,0.0f,0.0f);
+        Kd = color3d(0.0f,0.0f,0.0f);
+        Ks = color3d(0.0f,0.0f,0.0f);
+        Ke = color3d(0.0f,0.0f,0.0f);
         n = 0;
     }
 };
