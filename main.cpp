@@ -61,11 +61,12 @@ double clamp(double a,double low, double high){
     }
 }
 
-void display(){
+void display(string outputFile){
     int h = pixelMap.size();
     int w = pixelMap[0].size();
     double scale = 1.0/(samples_per_pixel);
-    cout<<"P3\n"<<w<<" "<<h<<"\n255\n";
+    ofstream myFile(outputFile);
+    myFile<<"P3\n"<<w<<" "<<h<<"\n255\n";
     for(int j=h-1;j>=0;j--){
         for(int i=0;i<w;i++){
             color3d c = pixelMap[j][i];
@@ -79,9 +80,10 @@ void display(){
             int ir = int(255.99*r);
             int ig = int(255.99*g);
             int ib = int(255.99*b);
-            cout<<ir<<" "<<ig<<" "<<ib<<"\n";
+            myFile<<ir<<" "<<ig<<" "<<ib<<"\n";
         }
     }
+    myFile.close();
 }
 
 int main(int argc, char** argv){
@@ -89,8 +91,15 @@ int main(int argc, char** argv){
     string config_path = argv[2];
     Scene newScene = generate_scene(obj_path, config_path);
 
+    auto start = chrono::high_resolution_clock::now();
     newScene.castRays(pixelMap,samples_per_pixel,nthreads);
-    display();
+    auto stop = chrono::high_resolution_clock::now();
+    auto duration = chrono::duration_cast<chrono::milliseconds>(stop - start);
+    ofstream execFile(argv[4]);
+    execFile << duration.count() << endl;
+    execFile.close();
+
+    display(argv[3]);
 
     return 0;
 }

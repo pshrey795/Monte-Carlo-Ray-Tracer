@@ -1,0 +1,22 @@
+Teapot
+
+1) For Image 3
+camera{
+    0 -8 12
+    0 0 3
+    0 0 1
+    800
+    800
+    200
+}      
+parameters{
+    nthreads: 16
+    samples_per_pixel: 16
+    direct_samples_per_ray: 2
+    indirect_samples_per_ray: 3
+    tracing_depth: 3
+    min_primitives_per_box: 10
+}
+Exec Time: 8600 seconds
+
+2) Image 1 and 2 are variations with different camera positions, with roughly same execution time

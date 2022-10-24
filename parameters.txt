@@ -1,0 +1,115 @@
+1) Cornell Box 
+camera{
+    278 273 -200
+    278 273 0
+    0 1 0
+    800 
+    800
+    200
+}
+parameters{
+    nthreads: 16
+    samples_per_pixel: 8
+    direct_samples_per_ray: 2
+    indirect_samples_per_ray: 2
+    tracing_depth: 2
+    min_primitives_per_box: 2
+}
+Exec Time: 150 seconds
+
+2) Teapot    
+camera{
+    0 -8 12
+    0 0 3
+    0 0 1
+    800
+    800
+    200
+}      
+parameters{
+    nthreads: 16
+    samples_per_pixel: 16
+    direct_samples_per_ray: 2
+    indirect_samples_per_ray: 3
+    tracing_depth: 3
+    min_primitives_per_box: 10
+}
+Exec Time: 8600 seconds
+
+
+3) Kettle Drum 
+camera{
+    17.4 178 34
+    30 0 -10
+    0 0 1
+    400
+    400
+    200
+}
+parameters{
+    nthreads: 16
+    samples_per_pixel: 4
+    direct_samples_per_ray: 2
+    indirect_samples_per_ray: 2
+    tracing_depth: 2
+    min_primitives_per_box: 10
+}
+Exec Time: 637 seconds
+
+
+camera{
+    17.4 178 34
+    30 0 -10
+    0 0 1
+    400
+    400
+    200
+}
+parameters{
+    nthreads: 16
+    samples_per_pixel: 16
+    direct_samples_per_ray: 2
+    indirect_samples_per_ray: 3
+    tracing_depth: 2
+    min_primitives_per_box: 10
+}
+Exec Time: 7180 seconds
+
+
+4) Smilodon 
+camera{
+    195 208 14
+    0 110 0
+    0 1 0
+    800
+    800
+    200
+}
+parameters{
+    nthreads: 16
+    samples_per_pixel: 16
+    direct_samples_per_ray: 2
+    indirect_samples_per_ray: 3
+    tracing_depth: 2
+    min_primitives_per_box: 10
+}
+Exec Time: 1586 seconds
+
+
+camera{
+    292.5 208 21
+    0 110 0
+    0 1 0
+    800
+    800
+    200
+}
+parameters{
+    nthreads: 16
+    samples_per_pixel: 16
+    direct_samples_per_ray: 2
+    indirect_samples_per_ray: 3
+    tracing_depth: 2
+    min_primitives_per_box: 10
+}
+Exec Time: 420 seconds

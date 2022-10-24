@@ -1,0 +1,42 @@
+Kettle Drum 
+(For this test case, I have set the emissivity of some material(Ke) to non-zero for visibility)
+
+
+1) Image 1
+camera{
+    17.4 178 34
+    30 0 -10
+    0 0 1
+    400
+    400
+    200
+}
+parameters{
+    nthreads: 16
+    samples_per_pixel: 4
+    direct_samples_per_ray: 2
+    indirect_samples_per_ray: 2
+    tracing_depth: 2
+    min_primitives_per_box: 10
+}
+Exec Time: 637 seconds
+
+
+2) Image 2
+camera{
+    17.4 178 34
+    30 0 -10
+    0 0 1
+    400
+    400
+    200
+}
+parameters{
+    nthreads: 16
+    samples_per_pixel: 16
+    direct_samples_per_ray: 2
+    indirect_samples_per_ray: 3
+    tracing_depth: 3
+    min_primitives_per_box: 10
+}
+Exec Time: 7180 seconds

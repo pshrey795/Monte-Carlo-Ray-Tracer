@@ -51,7 +51,7 @@ void Scene::loadCamera(string path){
     screen_depth = stoi(line);
 
     //Creating camera
-    this->cam = new Camera(camPos, lookAt, camUp, screen_width, screen_height, screen_depth);
+    this->cam = new Camera(camPos, lookAt, camUp, screen_width, screen_height, screen_depth, 1.0);
     myFile.close();
 }
 
@@ -131,8 +131,8 @@ void Scene::castRays(vector<vector<color3d>>& pixelMap, int samples, int n_threa
             for(int y=0;y<width;y++){
                 color3d new_color(0.0f);
                 for(int i = 0;i < samples; i++){
-                    double u = x - 0.5 + random_double();
-                    double v = y - 0.5 + random_double();
+                    double u = (x - 0.5 + random_double());
+                    double v = (y - 0.5 + random_double());
                     Ray ray = cam->getRay(v, u);
                     new_color += traceRay(ray, 0);
                 }

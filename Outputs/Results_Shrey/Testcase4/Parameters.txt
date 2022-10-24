@@ -1,0 +1,41 @@
+Smilodon 
+(For this test case, I have set the emissivity of some material(Ke) to non-zero for visibility)
+
+1) Image 1
+camera{
+    195 208 14
+    0 110 0
+    0 1 0
+    800
+    800
+    200
+}
+parameters{
+    nthreads: 16
+    samples_per_pixel: 16
+    direct_samples_per_ray: 2
+    indirect_samples_per_ray: 3
+    tracing_depth: 2
+    min_primitives_per_box: 10
+}
+Exec Time: 1586 seconds
+
+
+2) Image 2
+camera{
+    292.5 208 21
+    0 110 0
+    0 1 0
+    800
+    800
+    200
+}
+parameters{
+    nthreads: 16
+    samples_per_pixel: 16
+    direct_samples_per_ray: 2
+    indirect_samples_per_ray: 3
+    tracing_depth: 2
+    min_primitives_per_box: 10
+}
+Exec Time: 420 seconds

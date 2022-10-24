@@ -9,9 +9,9 @@ camera{
 
 parameters{
     nthreads: 16
-    samples_per_pixel: 8
+    samples_per_pixel: 16
     direct_samples_per_ray: 2
-    indirect_samples_per_ray: 2
-    tracing_depth: 2
+    indirect_samples_per_ray: 3
+    tracing_depth: 3
     min_primitives_per_box: 2
 }
